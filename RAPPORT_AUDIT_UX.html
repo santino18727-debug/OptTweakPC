@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>OptTweakPC — Rapport d'audit UX/UI & refonte autonome</title>
+<style>
+  :root {
+    --bg: #0f1117;
+    --surface: #181b24;
+    --surface-2: #1f2330;
+    --border: #2a2f3d;
+    --text: #e6e8ee;
+    --muted: #9aa3b2;
+    --primary: #6ea8fe;
+    --green: #3ddc84;
+    --orange: #ffb454;
+    --red: #ff6b6b;
+    --purple: #b794f6;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.65;
+    font-size: 15px;
+  }
+  .wrap { max-width: 960px; margin: 0 auto; padding: 3rem 1.5rem 5rem; }
+  header.hero {
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 2rem;
+    margin-bottom: 2.5rem;
+  }
+  .eyebrow {
+    color: var(--primary);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    font-size: 0.75rem;
+    font-weight: 600;
+  }
+  h1 { font-size: 2.3rem; margin: 0.4rem 0 0.6rem; line-height: 1.15; }
+  h2 {
+    font-size: 1.5rem;
+    margin: 3rem 0 1rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border);
+  }
+  h2 .num {
+    color: var(--primary);
+    font-variant-numeric: tabular-nums;
+    margin-right: 0.5rem;
+  }
+  h3 { font-size: 1.15rem; margin: 1.8rem 0 0.6rem; color: #fff; }
+  p { color: var(--muted); }
+  p.lead { font-size: 1.05rem; color: var(--text); }
+  a { color: var(--primary); }
+  code {
+    background: var(--surface-2);
+    padding: 0.1rem 0.4rem;
+    border-radius: 4px;
+    font-size: 0.85em;
+    font-family: ui-monospace, "SFMono-Regular", Menlo, monospace;
+    color: #d7e3ff;
+  }
+  .meta-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1rem;
+    margin-top: 1.5rem;
+  }
+  .meta-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 0.9rem 1.1rem;
+  }
+  .meta-card .k { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); }
+  .meta-card .v { font-size: 1.05rem; font-weight: 600; margin-top: 0.2rem; }
+  .pipeline {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    align-items: center;
+    margin: 1.5rem 0;
+  }
+  .pipeline .step {
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 0.4rem 0.9rem;
+    font-size: 0.85rem;
+    font-weight: 500;
+  }
+  .pipeline .arrow { color: var(--muted); }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1rem 0 1.5rem;
+    font-size: 0.88rem;
+  }
+  th, td {
+    text-align: left;
+    padding: 0.6rem 0.7rem;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+  }
+  th { color: #fff; font-weight: 600; background: var(--surface); }
+  tr:hover td { background: rgba(255,255,255,0.015); }
+  .tag {
+    display: inline-block;
+    padding: 0.12rem 0.55rem;
+    border-radius: 999px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+  .t-crit { background: rgba(255,107,107,0.16); color: var(--red); }
+  .t-warn { background: rgba(255,180,84,0.16); color: var(--orange); }
+  .t-ok   { background: rgba(61,220,132,0.16); color: var(--green); }
+  .t-info { background: rgba(110,168,254,0.16); color: var(--primary); }
+  .t-done { background: rgba(61,220,132,0.16); color: var(--green); }
+  .t-skip { background: rgba(154,163,178,0.16); color: var(--muted); }
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.3rem 1.5rem;
+    margin: 1.2rem 0;
+  }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1.2rem; }
+  @media (max-width: 700px) { .grid-2 { grid-template-columns: 1fr; } }
+  ul.clean { padding-left: 1.2rem; }
+  ul.clean li { margin-bottom: 0.4rem; color: var(--muted); }
+  ul.clean li b { color: var(--text); }
+  .iter-head {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    margin-bottom: 0.3rem;
+  }
+  .iter-badge {
+    background: var(--primary);
+    color: #0f1117;
+    font-weight: 800;
+    border-radius: 8px;
+    padding: 0.25rem 0.7rem;
+    font-size: 0.85rem;
+  }
+  .callout {
+    border-left: 3px solid var(--primary);
+    background: var(--surface-2);
+    padding: 0.8rem 1.1rem;
+    border-radius: 0 8px 8px 0;
+    margin: 1.2rem 0;
+  }
+  .callout.warn { border-left-color: var(--orange); }
+  .callout.danger { border-left-color: var(--red); }
+  .stat-row { display: flex; flex-wrap: wrap; gap: 1.5rem; margin: 1.5rem 0; }
+  .stat { }
+  .stat .big { font-size: 2rem; font-weight: 800; color: #fff; }
+  .stat .lbl { color: var(--muted); font-size: 0.85rem; }
+  footer {
+    margin-top: 4rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border);
+    color: var(--muted);
+    font-size: 0.85rem;
+  }
+  .src { font-size: 0.8rem; color: var(--muted); }
+  .check { color: var(--green); font-weight: 700; }
+  .file { font-family: ui-monospace, monospace; font-size: 0.82rem; color: #d7e3ff; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="hero">
+    <div class="eyebrow">Audit UX/UI · Veille concurrentielle · Refonte autonome</div>
+    <h1>OptTweakPC — Rapport d'audit &amp; refonte</h1>
+    <p class="lead">Pipeline autonome : audit complet (frontend + surface backend), analyse concurrentielle, arbitrage par conseil multi-perspectives, puis application en 3 itérations non-cassantes — chacune compilée et vérifiée.</p>
+    <div class="meta-grid">
+      <div class="meta-card"><div class="k">Projet</div><div class="v">OptTweakPC</div></div>
+      <div class="meta-card"><div class="k">Stack</div><div class="v">Tauri · React · Rust</div></div>
+      <div class="meta-card"><div class="k">Date</div><div class="v">13 juin 2026</div></div>
+      <div class="meta-card"><div class="k">Itérations</div><div class="v">3 / 3 livrées</div></div>
+    </div>
+  </header>
+
+  <section>
+    <p class="eyebrow">Synthèse</p>
+    <p class="lead">L'application était un prototype issu du template Tauri (1 écran, 4 boutons, 4 commandes Rust wrappant du PowerShell) avec un <b>bug visuel actif</b>, aucune confirmation avant action système, et des listes de services <b>codées en dur</b> spécifiques à la machine de dev. Après le pipeline, c'est une app avec garde-fous de sécurité, contrat d'API typé, aperçu avant action (dry-run), annulation (undo), contexte système et accessibilité de base.</p>
+    <div class="stat-row">
+      <div class="stat"><div class="big">21 → 18</div><div class="lbl">points retenus (3 écartés : sur-ingénierie)</div></div>
+      <div class="stat"><div class="big">4 → 9</div><div class="lbl">commandes backend</div></div>
+      <div class="stat"><div class="big">3×</div><div class="lbl">compilations vérifiées (front + back)</div></div>
+      <div class="stat"><div class="big">0</div><div class="lbl">régression introduite</div></div>
+    </div>
+
+    <h3>Méthodologie</h3>
+    <div class="pipeline">
+      <span class="step">🔎 agent-finder</span><span class="arrow">→</span>
+      <span class="step">3 audits parallèles</span><span class="arrow">→</span>
+      <span class="step">veille concurrentielle</span><span class="arrow">→</span>
+      <span class="step">⚖️ council 4 voix</span><span class="arrow">→</span>
+      <span class="step">it.1</span><span class="arrow">→</span>
+      <span class="step">it.2</span><span class="arrow">→</span>
+      <span class="step">it.3</span><span class="arrow">→</span>
+      <span class="step">✅ build vérifié</span>
+    </div>
+    <p>L'<b>agent-finder</b> a cartographié les meilleurs spécialistes du catalogue (196 agents) et signalé honnêtement que la plupart des customs GabiDevFamily sont calibrés Flutter — non pertinents ici (React/Rust). Trois audits ont tourné en parallèle (UX frontend, surface backend, concurrence), puis un <b>conseil à 4 perspectives</b> (pragmatique / puriste / sécurité / performance) a arbitré le découpage en itérations.</p>
+  </section>
+
+  <h2><span class="num">1.</span>Audit — Frontend (UX/UI)</h2>
+  <p>Constats principaux sur l'écran React unique. Sévérité : <span class="tag t-crit">critique</span> <span class="tag t-warn">moyen</span> <span class="tag t-ok">mineur</span></p>
+  <table>
+    <thead><tr><th>#</th><th>Constat</th><th>Sév.</th><th>Statut</th></tr></thead>
+    <tbody>
+      <tr><td>C1</td><td><b>Classes <code>.status-box</code> / <code>.success</code> / <code>.error</code> référencées mais non définies</b> dans le CSS → impossible de distinguer visuellement un succès d'une erreur.</td><td><span class="tag t-crit">critique</span></td><td><span class="tag t-done">corrigé it.1</span></td></tr>
+      <tr><td>C2</td><td>Aucune confirmation avant action destructive (nettoyage, optimisation) — un clic accidentel modifie le système.</td><td><span class="tag t-crit">critique</span></td><td><span class="tag t-done">corrigé it.1</span></td></tr>
+      <tr><td>C3</td><td><code>isLoading</code> global → un audit en cours bloque <i>tous</i> les boutons, même sans conflit.</td><td><span class="tag t-crit">critique</span></td><td><span class="tag t-done">corrigé it.1</span></td></tr>
+      <tr><td>C4</td><td>Résidus du template Tauri (<code>.logo.vite</code>, <code>.logo.react</code>) dans le CSS.</td><td><span class="tag t-warn">moyen</span></td><td><span class="tag t-done">corrigé it.1</span></td></tr>
+      <tr><td>C5/C6</td><td>Pas de <code>:focus-visible</code> ni de style <code>:disabled</code> → feedback clavier et état désactivé invisibles.</td><td><span class="tag t-warn">moyen</span></td><td><span class="tag t-done">corrigé it.1</span></td></tr>
+      <tr><td>A2</td><td>Zone de résultat sans <code>aria-live</code> / <code>role=status</code> → lecteurs d'écran muets.</td><td><span class="tag t-warn">moyen</span></td><td><span class="tag t-done">corrigé it.1</span></td></tr>
+      <tr><td>Confiance</td><td>L'app modifie des services système mais n'indique ni les droits requis, ni la réversibilité, ni ce qui va changer.</td><td><span class="tag t-crit">critique</span></td><td><span class="tag t-done">it.1+it.3</span></td></tr>
+    </tbody>
+  </table>
+
+  <h2><span class="num">2.</span>Audit — Surface backend (commandes Tauri)</h2>
+  <table>
+    <thead><tr><th>#</th><th>Constat</th><th>Sév.</th><th>Statut</th></tr></thead>
+    <tbody>
+      <tr><td>B1</td><td><b>Aucune détection des droits admin</b> → échecs avec message système anglais cryptique affiché brut à l'utilisateur.</td><td><span class="tag t-crit">critique</span></td><td><span class="tag t-done">corrigé it.1</span></td></tr>
+      <tr><td>B2</td><td><b>Listes de services codées en dur</b> spécifiques à la machine dev (Logitech G HUB, MSI) → l'app est inutilisable proprement sur tout autre poste.</td><td><span class="tag t-crit">critique</span></td><td><span class="tag t-done">corrigé it.2</span></td></tr>
+      <tr><td>B3</td><td>Tous les retours sont <code>Result&lt;String, String&gt;</code> en texte libre → le front doit parser de l'humain (<code>startsWith("Erreur")</code>) pour deviner le résultat.</td><td><span class="tag t-warn">moyen</span></td><td><span class="tag t-done">corrigé it.2</span></td></tr>
+      <tr><td>B4</td><td><code>powershell</code> invoqué par nom relatif → risque de détournement via le PATH (l'app tourne en admin).</td><td><span class="tag t-warn">moyen</span></td><td><span class="tag t-done">corrigé it.1</span></td></tr>
+      <tr><td>B5</td><td><code>clean_startup</code> ni idempotent ni réversible : pas de dry-run, pas d'undo, pas de snapshot d'état avant modification.</td><td><span class="tag t-warn">moyen</span></td><td><span class="tag t-done">corrigé it.2+it.3</span></td></tr>
+      <tr><td>B6</td><td><code>optimize_performance</code> est un placeholder (active seulement le plan d'alim) — non documenté côté UX.</td><td><span class="tag t-ok">mineur</span></td><td><span class="tag t-skip">documenté UI</span></td></tr>
+    </tbody>
+  </table>
+
+  <h2><span class="num">3.</span>Veille concurrentielle</h2>
+  <p>Sept optimiseurs Windows analysés (sources web réelles). Positionnement d'OptTweakPC vs le marché :</p>
+  <table>
+    <thead><tr><th>Fonctionnalité</th><th>OptTweak<br>PC</th><th>ShutUp10++</th><th>Wintoys</th><th>WinUtil</th><th>CCleaner</th></tr></thead>
+    <tbody>
+      <tr><td>Point de restauration</td><td><span class="check">✓</span></td><td>✓</td><td>~</td><td>✓ auto</td><td>✗</td></tr>
+      <tr><td>Explications par action</td><td>✓ <span class="src">(ajouté)</span></td><td>✓</td><td>✓</td><td>✓</td><td>✓</td></tr>
+      <tr><td>Indicateur de risque</td><td>✓ <span class="src">(ajouté)</span></td><td>✓ couleurs</td><td>~</td><td>✓</td><td>~</td></tr>
+      <tr><td>Aperçu avant application</td><td>✓ <span class="src">(ajouté)</span></td><td>—</td><td>~</td><td>—</td><td>—</td></tr>
+      <tr><td>Undo individuel</td><td>✓ <span class="src">(ajouté)</span></td><td>✓</td><td>✓</td><td>✓</td><td>✗</td></tr>
+      <tr><td>Open-source / portable</td><td><span class="check">✓ ✓</span></td><td>✗ / ✓</td><td>✗</td><td>✓</td><td>✗</td></tr>
+      <tr><td>Monétisation agressive</td><td><span class="check">non</span></td><td>non</td><td>non</td><td>non</td><td><span style="color:var(--red)">oui</span></td></tr>
+    </tbody>
+  </table>
+  <div class="grid-2">
+    <div class="card">
+      <h3 style="margin-top:0">✅ Patterns gagnants adoptés</h3>
+      <ul class="clean">
+        <li><b>Description + indicateur de risque</b> par action (ShutUp10++, WinUtil)</li>
+        <li><b>Aperçu (dry-run)</b> avant d'agir (inspiré du « voir ce qui change »)</li>
+        <li><b>Undo</b> via snapshot d'état (WinUtil, ShutUp10++)</li>
+        <li><b>Contexte hardware</b> à l'accueil (Wintoys)</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3 style="margin-top:0">⛔ Anti-patterns évités</h3>
+      <ul class="clean">
+        <li>Tweaks « magiques » sans explication</li>
+        <li>Registry cleaner placebo (CCleaner)</li>
+        <li>Faux boosters FPS/RAM non vérifiables</li>
+        <li>Monétisation agressive / dark patterns</li>
+        <li>Tweaks irréversibles sans avertissement</li>
+      </ul>
+    </div>
+  </div>
+  <p class="src">Sources : oo-software.com · binaryfork.com (Wintoys) · christitus.com (WinUtil) · github.com/hellzerg/optimizer · cybernews.com &amp; time.com (CCleaner) · betanews.com (BleachBit) · remote.tools (Razer Cortex).</p>
+
+  <h2><span class="num">4.</span>Décision du conseil (4 perspectives)</h2>
+  <p>Le conseil a fait débattre les angles <b>pragmatique</b>, <b>puriste/architecte</b>, <b>sécurité</b> et <b>performance/UX</b>, puis tranché.</p>
+  <div class="callout warn">
+    <b>Écartés comme sur-ingénierie</b> pour une app de cette taille (YAGNI) :
+    <ul class="clean" style="margin-bottom:0">
+      <li><b>Mode Safe/Avancé + export/import profil JSON</b> — aucun usage multi-machine aujourd'hui. À re-débattre si distribution.</li>
+      <li><b>Dashboard hardware complet</b> — dégradé à 4 valeurs read-only (gardé), pas un dashboard.</li>
+      <li><b>Journal persistant sur disque</b> — dégradé à un journal de session en mémoire (gardé).</li>
+    </ul>
+  </div>
+  <div class="callout danger">
+    <b>Piège technique central (ordonnancement)</b> : le contrat <code>invoke&lt;string&gt;</code> + le routage d'erreur par <code>startsWith("Erreur")</code> ne devaient changer qu'<u>une seule fois</u>, proprement, en itération 2 — jamais en mélangeant typage et cosmétique. Tout le reste a été ordonné autour de cette contrainte.
+  </div>
+
+  <h2><span class="num">5.</span>Application — 3 itérations</h2>
+
+  <div class="card">
+    <div class="iter-head"><span class="iter-badge">IT. 1</span><h3 style="margin:0">Sécurité de base + le proto cesse d'être cassé</h3></div>
+    <p style="margin-top:0.4rem"><i>100 % additif — aucune signature Rust modifiée, le front reste sur <code>invoke&lt;string&gt;</code>.</i></p>
+    <ul class="clean">
+      <li>Bug CSS corrigé : styles <code>.status-box / .success / .error</code> + résidus template supprimés</li>
+      <li>Boutons : <code>:disabled</code>, <code>:focus-visible</code>, CTA primaire, bouton « Nettoyer » en warning</li>
+      <li>Badges de risque + descriptions enrichies par action ; <code>aria-live</code> / <code>role=status</code></li>
+      <li>Modale de confirmation avant action destructive (<b>sans dépendance</b> — modale React native)</li>
+      <li>Reset du statut + <b>loading par-commande</b> (state <code>activeCommand</code>)</li>
+      <li>Rust : chemin absolu <code>powershell.exe</code> ; nouvelle commande <code>check_admin_rights</code> + bannière d'avertissement</li>
+    </ul>
+    <p class="file">src/App.tsx · src/App.css · src-tauri/src/core/system.rs (nouveau) · backup.rs · performance.rs · startup.rs · lib.rs</p>
+  </div>
+
+  <div class="card">
+    <div class="iter-head"><span class="iter-badge">IT. 2</span><h3 style="margin:0">Bascule vers le contrat typé (mouvement coordonné)</h3></div>
+    <p style="margin-top:0.4rem"><i>La seule itération qui change le contrat front↔back — faite d'un bloc, commande par commande.</i></p>
+    <ul class="clean">
+      <li><code>audit_startup</code> → <code>Vec&lt;StartupEntry&gt;</code> rendu en table propre (fini le dump texte)</li>
+      <li><code>clean_startup</code> → <code>CleanupResult</code> typé ; nouvelle commande <code>preview_startup_cleanup</code> (dry-run)</li>
+      <li><b>Dry-run et application partagent exactement la même liste de cibles</b> → l'aperçu ne peut pas mentir</li>
+      <li><b>Détection dynamique</b> : les services absents sont rapportés, plus d'erreur — l'app devient portable</li>
+      <li>Liste élargie aux updaters courants (Google/Edge/Brave) ; <code>chromoting</code> toujours exclu</li>
+      <li>Canal d'erreur unifié : suppression du <code>startsWith("Erreur")</code>, erreurs via <code>try/catch</code></li>
+    </ul>
+    <p class="file">src/App.tsx · src/App.css · src-tauri/src/modules/startup.rs · lib.rs</p>
+  </div>
+
+  <div class="card">
+    <div class="iter-head"><span class="iter-badge">IT. 3</span><h3 style="margin:0">Réversibilité + contexte (versions minimales)</h3></div>
+    <p style="margin-top:0.4rem"><i>Additif au-dessus du contrat typé.</i></p>
+    <ul class="clean">
+      <li><b>Undo</b> : <code>clean_startup</code> sauvegarde un snapshot d'état (<span class="file">%LOCALAPPDATA%\OptTweakPC</span>) ; <code>restore_startup</code> restaure le type de démarrage d'origine</li>
+      <li>Bouton « ↩ Annuler le nettoyage » visible seulement si un snapshot existe (<code>has_startup_snapshot</code>)</li>
+      <li><b>Avant/après</b> : colonne « Avant » dans les tables (état précédent capturé)</li>
+      <li><b>Contexte système</b> : <code>get_system_info</code> → plan d'alim, RAM libre, nb programmes au démarrage, CPU</li>
+      <li><b>Journal de session</b> horodaté (en mémoire, 20 dernières actions)</li>
+    </ul>
+    <p class="file">src/App.tsx · src/App.css · src-tauri/src/modules/startup.rs · core/system.rs · lib.rs</p>
+  </div>
+
+  <h2><span class="num">6.</span>Vérification</h2>
+  <p>Chaque itération a été compilée avant de passer à la suivante (exigence non-cassante du conseil).</p>
+  <table>
+    <thead><tr><th>Contrôle</th><th>Outil</th><th>Résultat</th></tr></thead>
+    <tbody>
+      <tr><td>Type-check frontend (×3)</td><td><code>tsc --noEmit</code></td><td><span class="tag t-done">exit 0</span></td></tr>
+      <tr><td>Compilation backend (×3)</td><td><code>cargo check</code></td><td><span class="tag t-done">exit 0</span></td></tr>
+      <tr><td>Build production complet</td><td><code>tsc &amp;&amp; vite build</code></td><td><span class="tag t-done">31 modules · 1.06s</span></td></tr>
+    </tbody>
+  </table>
+  <div class="callout">
+    <b>Non testé runtime</b> : la compilation garantit la cohérence des types et du contrat, mais le comportement réel des commandes PowerShell (création de point de restauration, restauration de services) n'a pas été exécuté sur la machine. À valider par un lancement <code>npm run tauri dev</code> en administrateur.
+  </div>
+
+  <h2><span class="num">7.</span>Reste à faire / recommandations</h2>
+  <ul class="clean">
+    <li><b>Test runtime en admin</b> — lancer l'app, vérifier chaque commande de bout en bout (notamment le throttling Windows du point de restauration &lt; 24 h, signalé à l'audit).</li>
+    <li><b>Implémenter réellement <code>optimize_performance</code></b> ou le marquer « bêta » — actuellement il n'active que le plan d'alimentation.</li>
+    <li><b>Vérifier le GUID du plan d'alim</b> avant application (peut ne pas exister sur certaines configs OEM).</li>
+    <li><b>Manifeste d'élévation Windows</b> — décision séparée (change le comportement de lancement, potentiellement cassant au packaging) ; non traité ici volontairement.</li>
+    <li><b>Audit sécurité dédié</b> — une app qui touche services/registre en admin mérite une passe <code>security-reviewer</code> avant toute distribution.</li>
+    <li><b>Réactivés différés (it.1)</b> — mode Safe/Avancé et export de profil : à reconsidérer si l'app est distribuée à d'autres postes.</li>
+  </ul>
+
+  <footer>
+    <p>Rapport généré le 13 juin 2026 · Pipeline autonome : agent-finder → 3 audits parallèles → veille concurrentielle → conseil 4 perspectives → 3 itérations → vérification build.</p>
+    <p>Surface backend : <code>create_restore_point</code>, <code>check_admin_rights</code>, <code>get_system_info</code>, <code>optimize_performance</code>, <code>audit_startup</code>, <code>preview_startup_cleanup</code>, <code>clean_startup</code>, <code>has_startup_snapshot</code>, <code>restore_startup</code>.</p>
+  </footer>
+
+</div>
+</body>
+</html>
