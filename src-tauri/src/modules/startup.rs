@@ -6,7 +6,13 @@ use std::process::Command;
 /// Execute un script PowerShell et renvoie stdout (ou stderr en cas d'echec).
 fn run_ps(script: &str) -> Result<String, String> {
     let output = Command::new(POWERSHELL)
-        .args(["-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", script])
+        .args([
+            "-NoProfile",
+            "-ExecutionPolicy",
+            "Bypass",
+            "-Command",
+            script,
+        ])
         .output()
         .map_err(|e| format!("Echec d'execution de PowerShell : {}", e))?;
 
