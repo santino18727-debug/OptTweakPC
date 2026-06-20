@@ -57,6 +57,11 @@ pub fn get_system_info() -> Result<SystemInfo, String> {
         } | ConvertTo-Json -Compress
     "#;
     let raw = run_ps(script)?;
-    serde_json::from_str(raw.trim())
-        .map_err(|e| format!("Lecture des infos systeme impossible : {} — {}", e, raw.trim()))
+    serde_json::from_str(raw.trim()).map_err(|e| {
+        format!(
+            "Lecture des infos systeme impossible : {} — {}",
+            e,
+            raw.trim()
+        )
+    })
 }
