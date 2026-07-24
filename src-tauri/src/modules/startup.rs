@@ -1,45 +1,6 @@
-use crate::core::backup::POWERSHELL;
+use crate::core::ps;
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
-use std::process::Command;
-
-/// Execute un script PowerShell et renvoie stdout (ou stderr en cas d'echec).
-fn run_ps(script: &str) -> Result<String, String> {
-    let output = Command::new(POWERSHELL)
-        .args([
-            "-NoProfile",
-            "-ExecutionPolicy",
-            "Bypass",
-            "-Command",
-            script,
-        ])
-        .output()
-        .map_err(|e| format!("Echec d'execution de PowerShell : {}", e))?;
-
-    if output.status.success() {
-        Ok(String::from_utf8_lossy(&output.stdout).to_string())
-    } else {
-        Err(String::from_utf8_lossy(&output.stderr).to_string())
-    }
-}
-
-/// Execute un script PowerShell qui produit du JSON et le normalise en tableau.
-/// PowerShell 5.1 serialise un objet unique sans crochets : on tolere objet,
-/// tableau ou sortie vide pour ne jamais casser cote front.
-fn run_ps_json(script: &str) -> Result<Vec<serde_json::Value>, String> {
-    let raw = run_ps(script)?;
-    let trimmed = raw.trim();
-    if trimmed.is_empty() {
-        return Ok(vec![]);
-    }
-    let value: serde_json::Value = serde_json::from_str(trimmed)
-        .map_err(|e| format!("Reponse PowerShell illisible (JSON) : {} — {}", e, trimmed))?;
-    Ok(match value {
-        serde_json::Value::Array(items) => items,
-        serde_json::Value::Null => vec![],
-        other => vec![other],
-    })
-}
 
 /// Une entree du demarrage Windows.
 #[derive(Serialize, Deserialize)]
@@ -184,7 +145,7 @@ pub fn audit_startup() -> Result<Vec<StartupEntry>, String> {
             Select-Object @{n='programme';e={$_.Name}}, @{n='emplacement';e={$_.Location}} |
             Sort-Object programme | ConvertTo-Json -Compress
     "#;
-    let values = run_ps_json(script)?;
+    let values = ps::run_ps_json(script)?;
     let entries: Vec<StartupEntry> = values
         .into_iter()
         .filter_map(|v| serde_json::from_value(v).ok())
@@ -195,7 +156,7 @@ pub fn audit_startup() -> Result<Vec<StartupEntry>, String> {
 /// Apercu (dry-run) : ce que `clean_startup` modifierait, SANS rien modifier.
 #[tauri::command]
 pub fn preview_startup_cleanup() -> Result<CleanupResult, String> {
-    let values = run_ps_json(&build_cleanup_script(false))?;
+    let values = ps::run_ps_json(&build_cleanup_script(false))?;
     Ok(parse_cleanup(values))
 }
 
@@ -217,7 +178,7 @@ fn snapshot_path() -> Result<PathBuf, String> {
 /// dans un snapshot pour permettre l'annulation. Renvoie un rapport structure.
 #[tauri::command]
 pub fn clean_startup() -> Result<CleanupResult, String> {
-    let values = run_ps_json(&build_cleanup_script(true))?;
+    let values = ps::run_ps_json(&build_cleanup_script(true))?;
     let result = parse_cleanup(values);
 
     // Sauvegarde des elements reellement modifies pour pouvoir les restaurer.
@@ -297,7 +258,7 @@ pub fn restore_startup() -> Result<CleanupResult, String> {
     }
     blocks.push_str("\nConvertTo-Json @($items) -Compress\n");
 
-    let values = run_ps_json(&blocks)?;
+    let values = ps::run_ps_json(&blocks)?;
     let result = parse_cleanup_restored(values);
 
     // Le snapshot est consomme : on l'efface pour eviter une double restauration.

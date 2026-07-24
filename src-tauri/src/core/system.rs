@@ -1,19 +1,5 @@
-use crate::core::backup::POWERSHELL;
+use crate::core::ps;
 use serde::{Deserialize, Serialize};
-use std::process::Command;
-
-/// Execute un script PowerShell et renvoie stdout (ou stderr en cas d'echec).
-fn run_ps(script: &str) -> Result<String, String> {
-    let output = Command::new(POWERSHELL)
-        .args(["-NoProfile", "-Command", script])
-        .output()
-        .map_err(|e| format!("Echec d'execution de PowerShell : {}", e))?;
-    if output.status.success() {
-        Ok(String::from_utf8_lossy(&output.stdout).to_string())
-    } else {
-        Err(String::from_utf8_lossy(&output.stderr).to_string())
-    }
-}
 
 /// Indique si le processus courant dispose des droits administrateur.
 /// Permet au frontend d'avertir l'utilisateur AVANT toute action qui en a
@@ -21,7 +7,7 @@ fn run_ps(script: &str) -> Result<String, String> {
 /// message systeme cryptique en anglais.
 #[tauri::command]
 pub fn check_admin_rights() -> Result<bool, String> {
-    let stdout = run_ps(
+    let stdout = ps::run_ps(
         "([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltinRole]::Administrator)",
     )?;
     Ok(stdout.trim().eq_ignore_ascii_case("True"))
@@ -56,7 +42,7 @@ pub fn get_system_info() -> Result<SystemInfo, String> {
             startup_count = $startup
         } | ConvertTo-Json -Compress
     "#;
-    let raw = run_ps(script)?;
+    let raw = ps::run_ps(script)?;
     serde_json::from_str(raw.trim()).map_err(|e| {
         format!(
             "Lecture des infos systeme impossible : {} — {}",
