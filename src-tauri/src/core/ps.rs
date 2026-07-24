@@ -37,10 +37,15 @@ pub fn run_ps(script: &str) -> Result<String, String> {
 }
 
 /// Execute un script PowerShell qui produit du JSON et le normalise en tableau.
+pub fn run_ps_json(script: &str) -> Result<Vec<serde_json::Value>, String> {
+    parse_ps_json(&run_ps(script)?)
+}
+
+/// Normalise une sortie JSON PowerShell en tableau de valeurs. Extrait de
+/// `run_ps_json` pour etre testable sans lancer PowerShell.
 /// PowerShell 5.1 serialise un objet unique sans crochets : on tolere objet,
 /// tableau ou sortie vide pour ne jamais casser cote front.
-pub fn run_ps_json(script: &str) -> Result<Vec<serde_json::Value>, String> {
-    let raw = run_ps(script)?;
+fn parse_ps_json(raw: &str) -> Result<Vec<serde_json::Value>, String> {
     let trimmed = raw.trim();
     if trimmed.is_empty() {
         return Ok(vec![]);
@@ -52,4 +57,60 @@ pub fn run_ps_json(script: &str) -> Result<Vec<serde_json::Value>, String> {
         serde_json::Value::Null => vec![],
         other => vec![other],
     })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::parse_ps_json;
+    use serde_json::json;
+
+    fn vide() -> Vec<serde_json::Value> {
+        Vec::new()
+    }
+
+    #[test]
+    fn chaine_vide_donne_liste_vide() {
+        assert_eq!(parse_ps_json("").unwrap(), vide());
+    }
+
+    #[test]
+    fn espaces_seuls_donnent_liste_vide() {
+        assert_eq!(parse_ps_json("   \n\t ").unwrap(), vide());
+    }
+
+    #[test]
+    fn null_donne_liste_vide() {
+        // PowerShell peut serialiser une collection vide en 'null'.
+        assert_eq!(parse_ps_json("null").unwrap(), vide());
+    }
+
+    #[test]
+    fn tableau_vide_donne_liste_vide() {
+        assert_eq!(parse_ps_json("[]").unwrap(), vide());
+    }
+
+    #[test]
+    fn objet_unique_est_enveloppe_en_tableau() {
+        // Cas critique : PowerShell 5.1 serialise un objet unique SANS crochets.
+        let out = parse_ps_json(r#"{"nom":"svc","etat":"cible"}"#).unwrap();
+        assert_eq!(out, vec![json!({"nom": "svc", "etat": "cible"})]);
+    }
+
+    #[test]
+    fn tableau_de_deux_objets_est_preserve() {
+        let out = parse_ps_json(r#"[{"a":1},{"b":2}]"#).unwrap();
+        assert_eq!(out, vec![json!({"a": 1}), json!({"b": 2})]);
+    }
+
+    #[test]
+    fn espaces_autour_du_json_sont_ignores() {
+        let out = parse_ps_json("  \n {\"a\":1} \n ").unwrap();
+        assert_eq!(out, vec![json!({"a": 1})]);
+    }
+
+    #[test]
+    fn json_invalide_donne_erreur() {
+        let err = parse_ps_json("pas du json").unwrap_err();
+        assert!(err.contains("illisible"), "message inattendu : {err}");
+    }
 }
